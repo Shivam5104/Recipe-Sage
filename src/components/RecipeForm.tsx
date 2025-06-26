@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +13,7 @@ interface RecipeFormProps {
 }
 
 export interface RecipeFormData {
+  dishName: string;
   ingredients: string[];
   dietaryRestrictions: string[];
   cuisinePreference: string;
@@ -23,6 +23,7 @@ export interface RecipeFormData {
 }
 
 const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
+  const [dishName, setDishName] = useState('');
   const [ingredients, setIngredients] = useState<string[]>(['']);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
   const [cuisinePreference, setCuisinePreference] = useState('');
@@ -58,14 +59,16 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const filteredIngredients = ingredients.filter(ing => ing.trim() !== '');
     
-    if (filteredIngredients.length === 0) {
-      alert('Please add at least one ingredient');
+    if (!dishName.trim()) {
+      alert('Please enter a dish name');
       return;
     }
 
+    const filteredIngredients = ingredients.filter(ing => ing.trim() !== '');
+
     onSubmit({
+      dishName: dishName.trim(),
       ingredients: filteredIngredients,
       dietaryRestrictions,
       cuisinePreference,
@@ -84,9 +87,21 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Dish Name Section */}
+          <div className="space-y-2">
+            <Label className="text-lg font-semibold text-coral-dark">Dish Name</Label>
+            <Input
+              value={dishName}
+              onChange={(e) => setDishName(e.target.value)}
+              placeholder="e.g., Chicken Tikka Masala, Pasta Carbonara, Chocolate Cake..."
+              className="border-coral/30 focus:border-coral text-lg"
+            />
+          </div>
+
           {/* Ingredients Section */}
           <div className="space-y-3">
-            <Label className="text-lg font-semibold text-coral-dark">Available Ingredients</Label>
+            <Label className="text-lg font-semibold text-coral-dark">Available Ingredients (Optional)</Label>
+            <p className="text-sm text-gray-600">Add any specific ingredients you have or want to use</p>
             {ingredients.map((ingredient, index) => (
               <div key={index} className="flex gap-2">
                 <Input
