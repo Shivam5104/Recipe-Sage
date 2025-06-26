@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Recipe app custom colors
+				coral: {
+					DEFAULT: '#FF8A80',
+					light: '#FFB3BA',
+					dark: '#FF5722'
+				},
+				peach: {
+					DEFAULT: '#FFE0B2',
+					light: '#FFF3E0',
+					dark: '#FFCC80'
+				},
+				teal: {
+					DEFAULT: '#4DB6AC',
+					light: '#80CBC4',
+					dark: '#26A69A'
 				}
+			},
+			fontFamily: {
+				'literata': ['Literata', 'serif'],
+				'sans': ['Inter', 'sans-serif']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +105,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.6s ease-out'
 			}
 		}
 	},
