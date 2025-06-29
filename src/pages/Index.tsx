@@ -1,33 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import RecipeForm, { RecipeFormData } from '@/components/RecipeForm';
 import RecipeDisplay, { Recipe } from '@/components/RecipeDisplay';
-import LanguageSelector from '@/components/LanguageSelector';
-import IngredientBot from '@/components/IngredientBot';
-import { generateRecipe, translateRecipe } from '@/services/recipeService';
+import { generateRecipe } from '@/services/recipeService';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { ChefHat, Sparkles } from 'lucide-react';
 
 const Index = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t, currentLanguage } = useLanguage();
-
-  // Handle language changes for existing recipes
-  useEffect(() => {
-    const handleLanguageChange = () => {
-      if (originalRecipe) {
-        const translatedRecipe = translateRecipe(originalRecipe, currentLanguage);
-        setRecipe(translatedRecipe);
-      }
-    };
-
-    window.addEventListener('languageChanged', handleLanguageChange);
-    return () => window.removeEventListener('languageChanged', handleLanguageChange);
-  }, [originalRecipe, currentLanguage]);
 
   const handleGenerateRecipe = async (formData: RecipeFormData) => {
     setIsLoading(true);
@@ -35,17 +17,16 @@ const Index = () => {
       console.log('Generating recipe with data:', formData);
       const generatedRecipe = await generateRecipe(formData);
       setRecipe(generatedRecipe);
-      setOriginalRecipe(generatedRecipe); // Store original for translation
       
       toast({
-        title: t('recipe.generated'),
-        description: t('recipe.ready'),
+        title: 'Recipe Generated! 🍳',
+        description: 'Your personalized recipe is ready to cook!',
       });
     } catch (error) {
       console.error('Error generating recipe:', error);
       toast({
-        title: t('recipe.error'),
-        description: t('recipe.error.desc'),
+        title: 'Oops! Something went wrong',
+        description: 'We couldn\'t generate your recipe. Please try again.',
         variant: "destructive",
       });
     } finally {
@@ -55,7 +36,6 @@ const Index = () => {
 
   const resetRecipe = () => {
     setRecipe(null);
-    setOriginalRecipe(null);
   };
 
   return (
@@ -66,18 +46,13 @@ const Index = () => {
           <div className="flex items-center justify-center gap-3 mb-6">
             <ChefHat className="h-12 w-12 text-coral-dark" />
             <h1 className="text-5xl md:text-6xl font-literata font-bold text-coral-dark">
-              {t('recipe.creator')}
+              Recipe Creator
             </h1>
             <Sparkles className="h-8 w-8 text-teal animate-pulse" />
           </div>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">
-            {t('recipe.tagline')}
+            Transform your available ingredients into delicious, personalized recipes with the power of AI. Let's create something amazing together!
           </p>
-          
-          {/* Language Selector */}
-          <div className="flex justify-center mb-8">
-            <LanguageSelector />
-          </div>
         </div>
 
         {/* Main Content */}
@@ -91,11 +66,10 @@ const Index = () => {
                   onClick={resetRecipe}
                   className="bg-teal hover:bg-teal-dark text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:shadow-lg"
                 >
-                  {t('recipe.create.another')}
+                  Create Another Recipe
                 </button>
               </div>
               <RecipeDisplay recipe={recipe} />
-              <IngredientBot recipe={recipe} />
             </div>
           )}
         </div>
@@ -103,7 +77,7 @@ const Index = () => {
         {/* Footer */}
         <div className="text-center mt-16 pt-8 border-t border-coral/20">
           <p className="text-gray-600 font-literata">
-            {t('recipe.footer')}
+            Crafted with ❤️ for home cooks who love to create
           </p>
         </div>
       </div>
