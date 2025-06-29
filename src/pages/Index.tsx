@@ -1,19 +1,33 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RecipeForm, { RecipeFormData } from '@/components/RecipeForm';
 import RecipeDisplay, { Recipe } from '@/components/RecipeDisplay';
 import LanguageSelector from '@/components/LanguageSelector';
 import IngredientBot from '@/components/IngredientBot';
-import { generateRecipe } from '@/services/recipeService';
+import { generateRecipe, translateRecipe } from '@/services/recipeService';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChefHat, Sparkles } from 'lucide-react';
 
 const Index = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [originalRecipe, setOriginalRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
+
+  // Handle language changes for existing recipes
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      if (originalRecipe) {
+        const translatedRecipe = translateRecipe(originalRecipe, currentLanguage);
+        setRecipe(translatedRecipe);
+      }
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+    return () => window.removeEventListener('languageChanged', handleLanguageChange);
+  }, [originalRecipe, currentLanguage]);
 
   const handleGenerateRecipe = async (formData: RecipeFormData) => {
     setIsLoading(true);
@@ -21,6 +35,7 @@ const Index = () => {
       console.log('Generating recipe with data:', formData);
       const generatedRecipe = await generateRecipe(formData);
       setRecipe(generatedRecipe);
+      setOriginalRecipe(generatedRecipe); // Store original for translation
       
       toast({
         title: t('recipe.generated'),
@@ -40,6 +55,7 @@ const Index = () => {
 
   const resetRecipe = () => {
     setRecipe(null);
+    setOriginalRecipe(null);
   };
 
   return (

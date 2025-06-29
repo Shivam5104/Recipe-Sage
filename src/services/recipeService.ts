@@ -4,32 +4,253 @@ import { Recipe } from '@/components/RecipeDisplay';
 // Mock AI recipe generation service
 // In a real app, this would call Gemini API or similar
 export const generateRecipe = async (formData: RecipeFormData): Promise<Recipe> => {
+  console.log('Recipe generation started with form data:', formData);
+  
+  // Get current language from localStorage (set by LanguageContext)
+  const currentLanguage = localStorage.getItem('currentLanguage') || 'en';
+  
+  // Create language-aware prompt
+  const languageInstructions = getLanguageInstructions(currentLanguage);
+  
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 2000));
-
-  const dishName = formData.dishName.toLowerCase();
   
-  // Generate detailed recipe based on dish name
-  const recipeData = generateRecipeByDishName(dishName, formData);
+  // Try specific recipes first
+  const specificRecipe = await generateSpecificRecipe(formData, currentLanguage);
+  if (specificRecipe) {
+    return specificRecipe;
+  }
   
-  return {
-    title: recipeData.title,
-    description: recipeData.description,
-    cookingTime: recipeData.cookingTime,
-    servings: recipeData.servings,
-    difficulty: recipeData.difficulty,
-    cuisine: recipeData.cuisine,
-    ingredients: recipeData.ingredients,
-    instructions: recipeData.instructions,
-    tags: [
-      ...recipeData.tags,
-      ...formData.dietaryRestrictions
-    ],
-    nutritionalInfo: recipeData.nutritionalInfo
-  };
+  // Fallback generation
+  const recipe = generateRecipeByDishName(formData.dishName, formData, currentLanguage);
+  return recipe;
 };
 
-const generateRecipeByDishName = (dishName: string, formData: RecipeFormData) => {
+const getLanguageInstructions = (language: string): string => {
+  const instructions = {
+    en: 'Generate the recipe in English',
+    ta: 'Generate the recipe in Tamil language (தமிழ்)',
+    hi: 'Generate the recipe in Hindi language (हिंदी)', 
+    de: 'Generate the recipe in German language (Deutsch)',
+    fr: 'Generate the recipe in French language (Français)'
+  };
+  return instructions[language as keyof typeof instructions] || instructions.en;
+};
+
+const generateSpecificRecipe = async (formData: RecipeFormData, language: string): Promise<Recipe | null> => {
+  const dishName = formData.dishName.toLowerCase();
+  
+  // Define recipes in multiple languages
+  const recipes = getRecipesDatabase(language);
+  
+  if (recipes[dishName]) {
+    return recipes[dishName];
+  }
+  
+  return null;
+};
+
+const getRecipesDatabase = (language: string) => {
+  const databases = {
+    en: {
+      'dosa': {
+        title: 'Traditional South Indian Dosa',
+        description: 'Crispy, golden crepe made from fermented rice and lentil batter, perfect for breakfast or dinner.',
+        cookingTime: '30',
+        servings: 4,
+        difficulty: 'Medium',
+        cuisine: 'South Indian',
+        ingredients: [
+          { name: 'Rice', amount: '3', unit: 'cups' },
+          { name: 'Urad dal (black gram)', amount: '1', unit: 'cup' },
+          { name: 'Fenugreek seeds', amount: '1', unit: 'tsp' },
+          { name: 'Salt', amount: '1', unit: 'tsp' },
+          { name: 'Oil', amount: '2', unit: 'tbsp' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'Soak rice and urad dal separately for 4-6 hours.' },
+          { step: 2, instruction: 'Grind them into smooth batter and mix together.' },
+          { step: 3, instruction: 'Add salt and let it ferment for 8-12 hours.' },
+          { step: 4, instruction: 'Heat a non-stick pan and pour a ladle of batter.' },
+          { step: 5, instruction: 'Spread it thin and cook until golden brown.' },
+          { step: 6, instruction: 'Serve hot with chutney and sambar.' }
+        ],
+        tags: ['Vegetarian', 'Gluten-free', 'Fermented'],
+        nutritionalInfo: {
+          calories: 168,
+          protein: '6g',
+          carbs: '35g',
+          fat: '2g'
+        }
+      },
+      'vegetable biryani': {
+        title: 'Aromatic Vegetable Biryani',
+        description: 'Fragrant rice dish layered with spiced vegetables and aromatic herbs.',
+        cookingTime: '45',
+        servings: 6,
+        difficulty: 'Medium',
+        cuisine: 'Indian',
+        ingredients: [
+          { name: 'Basmati rice', amount: '2', unit: 'cups' },
+          { name: 'Mixed vegetables', amount: '2', unit: 'cups' },
+          { name: 'Onions', amount: '2', unit: 'large' },
+          { name: 'Yogurt', amount: '1/2', unit: 'cup' },
+          { name: 'Biryani masala', amount: '2', unit: 'tbsp' },
+          { name: 'Saffron', amount: '1', unit: 'pinch' },
+          { name: 'Ghee', amount: '3', unit: 'tbsp' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'Soak basmati rice for 30 minutes.' },
+          { step: 2, instruction: 'Fry onions until golden and set aside.' },
+          { step: 3, instruction: 'Cook vegetables with spices and yogurt.' },
+          { step: 4, instruction: 'Boil rice until 70% cooked.' },
+          { step: 5, instruction: 'Layer rice and vegetables alternately.' },
+          { step: 6, instruction: 'Add saffron, ghee, and fried onions on top.' },
+          { step: 7, instruction: 'Cook on dum (slow cooking) for 30 minutes.' }
+        ],
+        tags: ['Vegetarian', 'Aromatic', 'Festive'],
+        nutritionalInfo: {
+          calories: 285,
+          protein: '8g',
+          carbs: '52g',
+          fat: '6g'
+        }
+      }
+    },
+    ta: {
+      'dosa': {
+        title: 'பாரம்பரிய தென்னிந்திய தோசை',
+        description: 'புளித்த அரிசி மற்றும் உளுந்து மாவில் செய்யப்பட்ட மொறுமொறுப்பான, தங்க நிற க்ரேப்.',
+        cookingTime: '30',
+        servings: 4,
+        difficulty: 'நடுத்தர',
+        cuisine: 'தென்னிந்திய',
+        ingredients: [
+          { name: 'அரிசி', amount: '3', unit: 'கப்' },
+          { name: 'உளுந்து', amount: '1', unit: 'கப்' },
+          { name: 'வெந்தய விதைகள்', amount: '1', unit: 'டீஸ்பூன்' },
+          { name: 'உப்பு', amount: '1', unit: 'டீஸ்பூன்' },
+          { name: 'எண்ணெய்', amount: '2', unit: 'டேபிள்ஸ்பூன்' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'அரிசி மற்றும் உளுந்தை தனித்தனியாக 4-6 மணி நேரம் ஊற வைக்கவும்.' },
+          { step: 2, instruction: 'அவற்றை மையாக அரைத்து ஒன்றாக கலக்கவும்.' },
+          { step: 3, instruction: 'உப்பு சேர்த்து 8-12 மணி நேரம் புளிக்க விடவும்.' },
+          { step: 4, instruction: 'ஒரு ஸ்டிக் செய்யாத பான் சூடாக்கி மாவை ஊற்றவும்.' },
+          { step: 5, instruction: 'மெல்லியதாக பரப்பி தங்க நிறமாகும் வரை சமைக்கவும்.' },
+          { step: 6, instruction: 'சட்னி மற்றும் சாம்பாருடன் சூடாக பரிமாறவும்.' }
+        ],
+        tags: ['சைவம்', 'பசையம் இல்லாத', 'புளித்த'],
+        nutritionalInfo: {
+          calories: 168,
+          protein: '6கிராம்',
+          carbs: '35கிராம்',
+          fat: '2கிராம்'
+        }
+      }
+    },
+    hi: {
+      'dosa': {
+        title: 'पारंपरिक दक्षिण भारतीय डोसा',
+        description: 'किण्वित चावल और दाल के बैटर से बना कुरकुरा, सुनहरा क्रेप।',
+        cookingTime: '30',
+        servings: 4,
+        difficulty: 'मध्यम',
+        cuisine: 'दक्षिण भारतीय',
+        ingredients: [
+          { name: 'चावल', amount: '3', unit: 'कप' },
+          { name: 'उड़द दाल', amount: '1', unit: 'कप' },
+          { name: 'मेथी के दाने', amount: '1', unit: 'चम्मच' },
+          { name: 'नमक', amount: '1', unit: 'चम्मच' },
+          { name: 'तेल', amount: '2', unit: 'बड़ा चम्मच' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'चावल और उड़द दाल को अलग-अलग 4-6 घंटे भिगोएं।' },
+          { step: 2, instruction: 'इन्हें महीन पीसकर एक साथ मिलाएं।' },
+          { step: 3, instruction: 'नमक डालकर 8-12 घंटे किण्वित होने दें।' },
+          { step: 4, instruction: 'नॉन-स्टिक पैन गर्म करके बैटर डालें।' },
+          { step: 5, instruction: 'पतला फैलाकर सुनहरा होने तक पकाएं।' },
+          { step: 6, instruction: 'चटनी और सांभर के साथ गर्म परोसें।' }
+        ],
+        tags: ['शाकाहारी', 'ग्लूटन-फ्री', 'किण्वित'],
+        nutritionalInfo: {
+          calories: 168,
+          protein: '6ग्राम',
+          carbs: '35ग्राम',
+          fat: '2ग्राम'
+        }
+      }
+    },
+    de: {
+      'dosa': {
+        title: 'Traditionelle Südindische Dosa',
+        description: 'Knuspriger, goldener Crêpe aus fermentiertem Reis- und Linsenteig.',
+        cookingTime: '30',
+        servings: 4,
+        difficulty: 'Mittel',
+        cuisine: 'Südindisch',
+        ingredients: [
+          { name: 'Reis', amount: '3', unit: 'Tassen' },
+          { name: 'Urad Dal', amount: '1', unit: 'Tasse' },
+          { name: 'Bockshornkleesamen', amount: '1', unit: 'TL' },
+          { name: 'Salz', amount: '1', unit: 'TL' },
+          { name: 'Öl', amount: '2', unit: 'EL' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'Reis und Urad Dal getrennt 4-6 Stunden einweichen.' },
+          { step: 2, instruction: 'Zu glattem Teig mahlen und zusammen mischen.' },
+          { step: 3, instruction: 'Salz hinzufügen und 8-12 Stunden fermentieren lassen.' },
+          { step: 4, instruction: 'Antihaftpfanne erhitzen und Teig hineingiessen.' },
+          { step: 5, instruction: 'Dünn verteilen und goldbraun braten.' },
+          { step: 6, instruction: 'Heiss mit Chutney und Sambar servieren.' }
+        ],
+        tags: ['Vegetarisch', 'Glutenfrei', 'Fermentiert'],
+        nutritionalInfo: {
+          calories: 168,
+          protein: '6g',
+          carbs: '35g',
+          fat: '2g'
+        }
+      }
+    },
+    fr: {
+      'dosa': {
+        title: 'Dosa Traditionnelle du Sud de l\'Inde',
+        description: 'Crêpe croustillante et dorée faite à partir de pâte de riz et lentilles fermentée.',
+        cookingTime: '30',
+        servings: 4,
+        difficulty: 'Moyen',
+        cuisine: 'Sud-Indienne',
+        ingredients: [
+          { name: 'Riz', amount: '3', unit: 'tasses' },
+          { name: 'Lentilles noires', amount: '1', unit: 'tasse' },
+          { name: 'Graines de fenugrec', amount: '1', unit: 'c. à thé' },
+          { name: 'Sel', amount: '1', unit: 'c. à thé' },
+          { name: 'Huile', amount: '2', unit: 'c. à soupe' }
+        ],
+        instructions: [
+          { step: 1, instruction: 'Tremper le riz et les lentilles séparément pendant 4-6 heures.' },
+          { step: 2, instruction: 'Les moudre en pâte lisse et mélanger ensemble.' },
+          { step: 3, instruction: 'Ajouter le sel et laisser fermenter 8-12 heures.' },
+          { step: 4, instruction: 'Chauffer une poêle antiadhésive et verser la pâte.' },
+          { step: 5, instruction: 'Étaler finement et cuire jusqu\'à dorure.' },
+          { step: 6, instruction: 'Servir chaud avec chutney et sambar.' }
+        ],
+        tags: ['Végétarien', 'Sans gluten', 'Fermenté'],
+        nutritionalInfo: {
+          calories: 168,
+          protein: '6g',
+          carbs: '35g',
+          fat: '2g'
+        }
+      }
+    }
+  };
+  
+  return databases[language as keyof typeof databases] || databases.en;
+};
+
+const generateRecipeByDishName = (dishName: string, formData: RecipeFormData, language: string): Recipe => {
   // Check if user has vegetarian/vegan dietary restrictions
   const isVegetarian = formData.dietaryRestrictions.some(restriction => 
     ['vegetarian', 'vegan', 'plant-based'].includes(restriction.toLowerCase())
@@ -38,410 +259,225 @@ const generateRecipeByDishName = (dishName: string, formData: RecipeFormData) =>
     ['vegan', 'plant-based'].includes(restriction.toLowerCase())
   );
 
-  // Comprehensive recipe database
-  const recipeDatabase: Record<string, any> = {
-    'dosa': {
-      title: 'Crispy South Indian Dosa',
-      description: 'Traditional South Indian crepe made from fermented rice and lentil batter, served with coconut chutney and sambar. Light, crispy, and naturally gluten-free.',
-      cookingTime: '30',
-      servings: 4,
-      difficulty: 'Intermediate',
-      cuisine: 'South Indian',
-      tags: ['Vegetarian', 'Gluten-free', 'Fermented', 'Traditional'],
-      ingredients: [
-        { name: 'Dosa batter (fermented rice and urad dal)', amount: '3', unit: 'cups' },
-        { name: 'Coconut oil or ghee', amount: '2', unit: 'tbsp' },
-        { name: 'Salt', amount: '1/2', unit: 'tsp' },
-        { name: 'Fresh coconut (grated)', amount: '1', unit: 'cup' },
-        { name: 'Green chilies', amount: '2', unit: 'pieces' },
-        { name: 'Ginger (small piece)', amount: '1', unit: 'inch' },
-        { name: 'Curry leaves', amount: '8-10', unit: 'pieces' },
-        { name: 'Mustard seeds', amount: '1', unit: 'tsp' },
-        { name: 'Urad dal', amount: '1', unit: 'tsp' },
-        { name: 'Hing (asafoetida)', amount: '1/4', unit: 'tsp' }
-      ],
-      instructions: [
-        {
-          step: 1,
-          instruction: 'Ensure your dosa batter is well-fermented and has a smooth, pourable consistency. If the batter is too thick, add a little water to thin it out. If too thin, let it sit for a few minutes to thicken naturally.',
-          tip: 'Good fermented batter should have a slightly sour smell and bubble formation. This indicates proper fermentation.'
-        },
-        {
-          step: 2,
-          instruction: 'Heat a non-stick pan or cast iron tawa over medium heat. Once hot, sprinkle a few drops of water on the surface - they should sizzle and evaporate immediately, indicating the right temperature.',
-        },
-        {
-          step: 3,
-          instruction: 'Pour a ladleful of batter in the center of the pan. Using the back of the ladle, spread the batter in a circular motion from center to edges, creating a thin, even crepe. Work quickly while the batter is still wet.',
-          tip: 'Start from the center and spiral outward for an even, round dosa. The thinner the better for crispy texture.'
-        },
-        {
-          step: 4,
-          instruction: 'Drizzle coconut oil or ghee around the edges and over the surface of the dosa. Cook for 2-3 minutes until the bottom becomes golden brown and crispy, and the edges start to lift slightly.',
-        },
-        {
-          step: 5,
-          instruction: 'For coconut chutney: Blend grated coconut, green chilies, ginger, and salt with a little water until smooth. In a small pan, heat oil, add mustard seeds, urad dal, curry leaves, and hing. Pour this tempering over the chutney.',
-        },
-        {
-          step: 6,
-          instruction: 'Gently fold the dosa in half or roll it up. Slide onto a serving plate immediately while hot and crispy. Serve with coconut chutney and sambar.',
-          tip: 'Serve immediately for the best crispy texture. Dosas become soft if left sitting too long.'
-        }
-      ],
-      nutritionalInfo: {
-        calories: 180,
-        protein: '6g',
-        carbs: '32g',
-        fat: '4g'
-      }
-    },
-    'vegetarian biryani': {
-      title: 'Fragrant Vegetable Biryani',
-      description: 'Aromatic basmati rice layered with spiced vegetables, herbs, and saffron. A royal vegetarian dish with complex flavors and beautiful presentation.',
-      cookingTime: '60',
-      servings: 6,
-      difficulty: 'Intermediate',
-      cuisine: 'Indian',
-      tags: ['Vegetarian', 'Aromatic', 'One-pot', 'Festive'],
-      ingredients: [
-        { name: 'Basmati rice', amount: '2', unit: 'cups' },
-        { name: 'Mixed vegetables (carrots, beans, peas, potatoes)', amount: '3', unit: 'cups chopped' },
-        { name: 'Large onions (sliced)', amount: '2', unit: 'whole' },
-        { name: 'Plain yogurt', amount: '1/2', unit: 'cup' },
-        { name: 'Ginger-garlic paste', amount: '2', unit: 'tbsp' },
-        { name: 'Biryani masala powder', amount: '2', unit: 'tbsp' },
-        { name: 'Saffron strands', amount: '1/4', unit: 'tsp' },
-        { name: 'Warm milk', amount: '1/4', unit: 'cup' },
-        { name: 'Ghee', amount: '4', unit: 'tbsp' },
-        { name: 'Fresh mint leaves', amount: '1/2', unit: 'cup' },
-        { name: 'Fresh cilantro', amount: '1/2', unit: 'cup' },
-        { name: 'Whole spices (bay leaves, cinnamon, cardamom)', amount: '1', unit: 'set' }
-      ],
-      instructions: [
-        {
-          step: 1,
-          instruction: 'Soak basmati rice in water for 30 minutes, then drain. Soak saffron in warm milk and set aside. Heat ghee in a heavy-bottomed pot and fry sliced onions until golden brown and crispy. Remove and set aside.',
-          tip: 'Crispy fried onions (birista) are crucial for authentic biryani flavor. Don\'t rush this step.'
-        },
-        {
-          step: 2,
-          instruction: 'In the same pot, add whole spices and sauté for 1 minute. Add mixed vegetables and cook for 5-7 minutes until partially tender. Add ginger-garlic paste, biryani masala, and yogurt. Cook until vegetables are 80% done.',
-        },
-        {
-          step: 3,
-          instruction: 'Boil water in a large pot with whole spices and salt. Add soaked rice and cook until 70% done (rice should still have a slight bite). Drain immediately.',
-          tip: 'Partially cooking the rice is key - it will finish cooking during the layering process.'
-        },
-        {
-          step: 4,
-          instruction: 'Layer the biryani: spread half the rice over vegetables, sprinkle half the fried onions, mint, and cilantro. Add remaining rice as top layer, then remaining onions, herbs, and saffron milk.',
-        },
-        {
-          step: 5,
-          instruction: 'Cover the pot with aluminum foil, then place the lid tightly. Cook on high heat for 2 minutes, then reduce to lowest heat and cook for 45 minutes. Turn off heat and let it rest for 10 minutes without opening.',
-          tip: 'This dum cooking method allows the flavors to meld and rice to finish cooking in steam.'
-        },
-        {
-          step: 6,
-          instruction: 'Gently mix the biryani before serving, being careful not to break the rice grains. Serve hot with raita, pickles, and boiled eggs for non-vegetarians.',
-        }
-      ],
-      nutritionalInfo: {
-        calories: 380,
-        protein: '8g',
-        carbs: '65g',
-        fat: '12g'
-      }
-    },
-    'chicken tikka masala': {
-      title: 'Authentic Chicken Tikka Masala',
-      description: 'Tender marinated chicken pieces in a rich, creamy tomato-based sauce with aromatic spices. A beloved Indian dish with a perfect balance of flavors.',
-      cookingTime: '45',
-      servings: 4,
-      difficulty: 'Intermediate',
-      cuisine: 'Indian',
-      tags: ['Indian', 'Curry', 'Protein-rich', 'Comfort food'],
-      ingredients: [
-        { name: 'Chicken breast (boneless, skinless)', amount: '2', unit: 'lbs' },
-        { name: 'Plain Greek yogurt', amount: '1', unit: 'cup' },
-        { name: 'Garam masala powder', amount: '2', unit: 'tsp' },
-        { name: 'Ground cumin', amount: '1', unit: 'tsp' },
-        { name: 'Paprika powder', amount: '1', unit: 'tsp' },
-        { name: 'Fresh garlic cloves', amount: '4', unit: 'pieces' },
-        { name: 'Fresh ginger root', amount: '1', unit: 'inch piece' },
-        { name: 'Large yellow onion', amount: '1', unit: 'whole' },
-        { name: 'Tomato puree (canned)', amount: '1', unit: 'can (14 oz)' },
-        { name: 'Heavy cooking cream', amount: '1/2', unit: 'cup' },
-        { name: 'Unsalted butter', amount: '3', unit: 'tbsp' },
-        { name: 'Sea salt', amount: '1', unit: 'tsp' },
-        { name: 'Fresh cilantro leaves', amount: '1/4', unit: 'cup' },
-        { name: 'Basmati rice (for serving)', amount: '2', unit: 'cups uncooked' }
-      ],
-      instructions: [
-        {
-          step: 1,
-          instruction: 'Cut the chicken breast into uniform bite-sized pieces (about 1-inch cubes). In a large mixing bowl, combine the plain Greek yogurt, half of the garam masala (1 tsp), ground cumin, paprika powder, and finely minced garlic cloves and ginger. Mix well to create a smooth marinade. Add the chicken pieces and coat thoroughly. Cover and marinate for at least 30 minutes at room temperature.',
-          tip: 'For maximum flavor, marinate the chicken for 2-4 hours or overnight in the refrigerator. The acids in yogurt will tenderize the meat.'
-        },
-        {
-          step: 2,
-          instruction: 'Heat a large heavy-bottomed skillet or cast iron pan over medium-high heat. Remove chicken from marinade and cook the pieces in batches, ensuring not to overcrowd the pan. Cook for 6-8 minutes, turning occasionally until all sides are golden brown and chicken is cooked through (internal temperature 165°F). Remove chicken and set aside on a plate.',
-          tip: 'Don\'t overcrowd the pan as this will steam the chicken instead of browning it. Cook in 2-3 batches if necessary for best results.'
-        },
-        {
-          step: 3,
-          instruction: 'In the same pan, add unsalted butter and let it melt completely. Add the diced yellow onion and cook over medium heat for 5-7 minutes, stirring frequently until the onion becomes soft, translucent, and lightly caramelized around the edges.',
-        },
-        {
-          step: 4,
-          instruction: 'Add the remaining minced garlic and ginger to the pan with onions. Cook for 1-2 minutes until very fragrant, stirring constantly to prevent burning. Add the remaining garam masala (1 tsp) and cook for another 30 seconds until the spices become aromatic.',
-        },
-        {
-          step: 5,
-          instruction: 'Pour in the entire can of tomato puree and bring the mixture to a gentle simmer. Reduce heat to medium-low and cook for 10-12 minutes, stirring occasionally, until the sauce reduces and thickens considerably. The sauce should coat the back of a spoon.',
-        },
-        {
-          step: 6,
-          instruction: 'Return the cooked chicken pieces to the pan along with any accumulated juices. Add the heavy cooking cream and sea salt. Gently stir to combine all ingredients. Simmer on low heat for 5-7 minutes until the chicken is heated through and the flavors meld together. Taste and adjust seasoning as needed.',
-          tip: 'If the sauce is too thick, add a splash of water or chicken broth. If too thin, simmer uncovered for a few more minutes to reduce.'
-        },
-        {
-          step: 7,
-          instruction: 'Remove from heat and let stand for 2-3 minutes. Garnish generously with freshly chopped cilantro leaves. Serve immediately over steamed basmati rice or with warm naan bread.',
-          tip: 'For authentic presentation, serve in individual bowls with a dollop of plain yogurt on the side and additional cilantro for garnish.'
-        }
-      ],
-      nutritionalInfo: {
-        calories: 420,
-        protein: '35g',
-        carbs: '12g',
-        fat: '28g'
-      }
-    },
-    'pasta carbonara': {
-      title: 'Classic Roman Pasta Carbonara',
-      description: 'Silky, creamy pasta with crispy pancetta, eggs, and Parmesan cheese. An authentic Italian dish that\'s simple yet sophisticated, originating from Rome.',
-      cookingTime: '25',
-      servings: 4,
-      difficulty: 'Easy',
-      cuisine: 'Italian',
-      tags: ['Italian', 'Pasta', 'Quick meal', 'Comfort food'],
-      ingredients: [
-        { name: 'Spaghetti pasta', amount: '1', unit: 'lb' },
-        { name: 'Pancetta (diced)', amount: '6', unit: 'oz' },
-        { name: 'Large fresh eggs', amount: '4', unit: 'whole' },
-        { name: 'Parmigiano-Reggiano cheese (freshly grated)', amount: '1', unit: 'cup' },
-        { name: 'Black pepper (freshly ground)', amount: '1', unit: 'tsp' },
-        { name: 'Sea salt', amount: '1', unit: 'tsp' },
-        { name: 'Extra virgin olive oil', amount: '2', unit: 'tbsp' }
-      ],
-      instructions: [
-        {
-          step: 1,
-          instruction: 'Bring a large pot of water to a rolling boil. Add a generous amount of sea salt (the water should taste like seawater). Add the spaghetti pasta and cook according to package directions until al dente (usually 8-10 minutes). Before draining, reserve 1 cup of the starchy pasta cooking water in a measuring cup.',
-          tip: 'The starchy pasta water is crucial for creating the creamy sauce - its starch content will help bind the eggs and cheese.'
-        },
-        {
-          step: 2,
-          instruction: 'While the pasta cooks, dice the pancetta into small uniform cubes (about 1/4 inch). Heat a large skillet over medium heat and add the diced pancetta. Cook for 4-5 minutes, stirring occasionally, until the pancetta is golden brown and crispy. The fat should render out and create a flavorful base.',
-        },
-        {
-          step: 3,
-          instruction: 'In a large mixing bowl, crack the fresh eggs and add the freshly grated Parmigiano-Reggiano cheese and freshly ground black pepper. Whisk vigorously until the mixture is well combined and slightly pale in color. The mixture should be smooth without any lumps.',
-        },
-        {
-          step: 4,
-          instruction: 'Drain the cooked pasta thoroughly and immediately add it to the skillet with the crispy pancetta. Remove the skillet from heat completely and toss the pasta with the pancetta and rendered fat for about 1 minute.',
-        },
-        {
-          step: 5,
-          instruction: 'Working quickly, pour the egg and cheese mixture over the hot pasta. Using tongs or a large spoon, toss the pasta continuously and vigorously for 2-3 minutes. The residual heat from the pasta will gently cook the eggs, creating a creamy sauce. Add reserved pasta water gradually, 2-3 tablespoons at a time, until you achieve a silky, creamy consistency.',
-          tip: 'This is the most critical step - keep tossing to prevent the eggs from scrambling. The pasta should be hot enough to cook the eggs but not so hot that they curdle.'
-        },
-        {
-          step: 6,
-          instruction: 'Taste and adjust seasoning with additional salt and black pepper as needed. The dish should be creamy, not dry or clumpy. Serve immediately in warmed bowls, topped with extra grated Parmigiano-Reggiano and a generous grinding of fresh black pepper.',
-          tip: 'Carbonara waits for no one - serve immediately while hot for the best texture and flavor.'
-        }
-      ],
-      nutritionalInfo: {
-        calories: 580,
-        protein: '28g',
-        carbs: '68g',
-        fat: '22g'
-      }
-    },
-    'chocolate cake': {
-      title: 'Rich Double Chocolate Layer Cake',
-      description: 'Moist, decadent chocolate cake with layers of rich chocolate frosting. Perfect for celebrations or when you need an indulgent chocolate fix.',
-      cookingTime: '90',
-      servings: 12,
-      difficulty: 'Intermediate',
-      cuisine: 'American',
-      tags: ['Dessert', 'Chocolate', 'Celebration', 'Baking'],
-      ingredients: [
-        { name: 'All-purpose flour', amount: '2', unit: 'cups' },
-        { name: 'Unsweetened cocoa powder', amount: '3/4', unit: 'cup' },
-        { name: 'Granulated sugar', amount: '2', unit: 'cups' },
-        { name: 'Baking soda', amount: '2', unit: 'tsp' },
-        { name: 'Baking powder', amount: '1', unit: 'tsp' },
-        { name: 'Large eggs (room temperature)', amount: '2', unit: 'whole' },
-        { name: 'Buttermilk (room temperature)', amount: '1', unit: 'cup' },
-        { name: 'Vegetable oil', amount: '1/2', unit: 'cup' },
-        { name: 'Pure vanilla extract', amount: '2', unit: 'tsp' },
-        { name: 'Hot strong coffee', amount: '1', unit: 'cup' },
-        { name: 'Unsalted butter (for frosting)', amount: '1/2', unit: 'cup softened' },
-        { name: 'Powdered sugar (sifted)', amount: '4', unit: 'cups' },
-        { name: 'Dark chocolate (melted and cooled)', amount: '4', unit: 'oz' },
-        { name: 'Heavy cream', amount: '3', unit: 'tbsp' }
-      ],
-      instructions: [
-        {
-          step: 1,
-          instruction: 'Preheat your oven to 350°F (175°C). Grease two 9-inch round cake pans thoroughly with butter, then dust with unsweetened cocoa powder, tapping out any excess. Line the bottoms with parchment paper circles for easy removal.',
-          tip: 'Use cocoa powder instead of flour for dusting to prevent white spots on your chocolate cake. Room temperature ingredients mix more easily.'
-        },
-        {
-          step: 2,
-          instruction: 'In a large mixing bowl, sift together the all-purpose flour, unsweetened cocoa powder, granulated sugar, baking soda, and baking powder. Whisk the dry ingredients together until evenly combined and no lumps remain.',
-        },
-        {
-          step: 3,
-          instruction: 'In a separate medium bowl, beat the eggs lightly with a fork. Add the room temperature buttermilk, vegetable oil, and pure vanilla extract. Whisk until the mixture is smooth and well combined.',
-        },
-        {
-          step: 4,
-          instruction: 'Create a well in the center of the dry ingredients and pour in the wet ingredient mixture. Using a large wooden spoon or electric mixer on low speed, mix until just combined. Do not overmix. Gradually stir in the hot coffee until the batter is smooth and well incorporated.',
-          tip: 'The hot coffee enhances the chocolate flavor and creates moisture. The batter will be thin - this is completely normal and results in a very moist cake.'
-        },
-        {
-          step: 5,
-          instruction: 'Divide the batter evenly between the prepared cake pans, using a kitchen scale for accuracy if available. Gently tap the pans on the counter to release air bubbles. Bake for 30-35 minutes, or until a toothpick inserted in the center comes out with just a few moist crumbs attached.',
-        },
-        {
-          step: 6,
-          instruction: 'Remove cakes from oven and cool in the pans for exactly 10 minutes. Run a knife around the edges to loosen, then turn out onto wire cooling racks. Remove parchment paper and cool completely before frosting (at least 1 hour).',
-        },
-        {
-          step: 7,
-          instruction: 'For the chocolate frosting: In a large bowl, beat the softened butter with an electric mixer until light and fluffy (3-4 minutes). Gradually add the sifted powdered sugar, alternating with the melted and cooled chocolate and heavy cream. Beat until smooth and spreadable.',
-        },
-        {
-          step: 8,
-          instruction: 'Once cakes are completely cool, place one layer on a serving plate. Spread a generous amount of frosting on top, then place the second layer on top. Frost the top and sides of the entire cake. Decorate as desired with chocolate shavings or fresh berries.',
-          tip: 'Make sure cakes are completely cool before frosting to prevent the frosting from melting. Chill the frosted cake for 30 minutes before serving for clean slices.'
-        }
-      ],
-      nutritionalInfo: {
-        calories: 520,
-        protein: '6g',
-        carbs: '78g',
-        fat: '22g'
-      }
-    }
-  };
-
-  // Check if we have a specific recipe for this dish
-  if (recipeDatabase[dishName]) {
-    return recipeDatabase[dishName];
-  }
-
-  // Generate a generic detailed recipe based on dish name and dietary restrictions
-  const words = dishName.split(' ');
+  // Get ingredients based on dietary restrictions and language
+  const ingredients = getIngredientsForLanguage(formData.dietaryRestrictions.includes('vegetarian'), language);
+  const instructions = getInstructionsForLanguage(dishName, language);
+  const nutritionalInfo = getNutritionalInfoForLanguage(language);
   
-  // Select appropriate main ingredient based on dietary restrictions
-  let mainIngredient;
-  if (isVegetarian) {
-    // Vegetarian ingredient options
-    const vegetarianIngredients = ['paneer', 'tofu', 'vegetables', 'lentils', 'chickpeas', 'mushrooms', 'quinoa', 'rice'];
-    mainIngredient = words.find(word => 
-      vegetarianIngredients.includes(word.toLowerCase())
-    ) || 'mixed vegetables';
-  } else {
-    // Non-vegetarian options
-    const allIngredients = ['chicken', 'beef', 'pork', 'fish', 'pasta', 'rice', 'potato', 'vegetable', 'paneer', 'tofu'];
-    mainIngredient = words.find(word => 
-      allIngredients.includes(word.toLowerCase())
-    ) || 'chicken';
-  }
-
-  // Create vegetarian-friendly ingredients list
-  const baseIngredients = [
-    { name: `Fresh ${mainIngredient} (main ingredient)`, amount: '1.5', unit: 'lbs' },
-    { name: 'Yellow onion (medium)', amount: '1', unit: 'whole' },
-    { name: 'Fresh garlic cloves', amount: '3', unit: 'pieces' },
-    { name: 'Extra virgin olive oil', amount: '3', unit: 'tbsp' },
-    { name: 'Sea salt', amount: '1', unit: 'tsp' },
-    { name: 'Black pepper (freshly ground)', amount: '1/2', unit: 'tsp' },
-    { name: 'Fresh herbs (parsley or cilantro)', amount: '1/4', unit: 'cup chopped' }
-  ];
-
-  // Add appropriate broth based on dietary restrictions
-  if (isVegan) {
-    baseIngredients.push({ name: 'Vegetable broth', amount: '1', unit: 'cup' });
-  } else if (isVegetarian) {
-    baseIngredients.push({ name: 'Vegetable or mushroom broth', amount: '1', unit: 'cup' });
-  } else {
-    baseIngredients.push({ name: 'Vegetable or chicken broth', amount: '1', unit: 'cup' });
-  }
-
-  // Add dietary-specific additional ingredients
-  if (isVegetarian) {
-    baseIngredients.push(
-      { name: 'Garam masala or mixed spices', amount: '1', unit: 'tsp' },
-      { name: 'Fresh ginger', amount: '1', unit: 'inch piece' }
-    );
-  }
-
   return {
-    title: `Homemade ${formData.dishName}`,
-    description: `A delicious homemade version of ${formData.dishName} made with fresh, quality ingredients and traditional cooking methods. This recipe delivers authentic flavors with detailed step-by-step instructions${isVegetarian ? ' and is completely vegetarian-friendly' : ''}.`,
-    cookingTime: '45',
+    title: getTitleForLanguage(dishName, language),
+    description: getDescriptionForLanguage(dishName, language),
+    cookingTime: '25',
     servings: 4,
-    difficulty: 'Easy',
-    cuisine: 'Traditional',
-    tags: ['Homemade', 'Fresh ingredients', 'Traditional', ...(isVegetarian ? ['Vegetarian'] : []), ...(isVegan ? ['Vegan'] : [])],
-    ingredients: baseIngredients,
-    instructions: [
-      {
-        step: 1,
-        instruction: `Begin by preparing all your ingredients. ${isVegetarian ? 'Wash and prepare' : 'Wash and pat dry'} the ${mainIngredient}. ${isVegetarian ? 'If using vegetables or paneer, cut into uniform pieces (about 1-inch cubes).' : 'If using meat, cut into uniform pieces (about 1-inch cubes for stewing or bite-sized pieces).'} Dice the yellow onion into small, even pieces. Mince the fresh garlic cloves finely. Chop the fresh herbs and set aside.`,
-        tip: 'Mise en place (having everything ready) makes the cooking process much smoother and ensures even cooking!'
-      },
-      {
-        step: 2,
-        instruction: 'Heat the extra virgin olive oil in a large, heavy-bottomed pan or Dutch oven over medium-high heat. Allow the oil to shimmer but not smoke. This indicates the proper temperature for searing.',
-      },
-      {
-        step: 3,
-        instruction: `Add the prepared ${mainIngredient} to the hot oil in a single layer. Do not overcrowd the pan. Cook without moving for 3-4 minutes to develop a golden-brown ${isVegetarian ? 'surface' : 'crust'}. Turn pieces and brown on all sides, about 8-10 minutes total. This browning step adds crucial flavor.`,
-        tip: 'Resist the urge to move the food too early - proper browning requires patience and high heat.'
-      },
-      {
-        step: 4,
-        instruction: 'Add the diced onion to the pan with the browned ingredients. Cook for 5-6 minutes, stirring occasionally, until the onion becomes soft, translucent, and lightly caramelized. The onion will pick up the browned bits from the bottom of the pan.',
-      },
-      {
-        step: 5,
-        instruction: `Add the minced garlic${isVegetarian ? ' and ginger (if using)' : ''} to the pan and cook for 1-2 minutes until very fragrant, stirring constantly to prevent burning. ${isVegetarian ? 'Add the garam masala or mixed spices and cook for another 30 seconds until aromatic. ' : ''}Season with sea salt and freshly ground black pepper, adjusting to taste.`,
-        tip: 'Garlic can burn quickly and become bitter, so add it after the onions have softened and watch it carefully.'
-      },
-      {
-        step: 6,
-        instruction: `Pour in the broth gradually, scraping up any browned bits from the bottom of the pan with a wooden spoon. These bits add incredible flavor. Bring to a gentle simmer, then reduce heat to low. Cover and cook for 20-25 minutes until the ${mainIngredient} is tender and ${isVegetarian ? 'cooked through' : 'cooked through'}.`,
-      },
-      {
-        step: 7,
-        instruction: 'Remove from heat and let rest for 5 minutes. Taste and adjust seasoning with additional salt and pepper as needed. Garnish generously with the fresh chopped herbs just before serving. Serve hot with your choice of sides.',
-        tip: 'Let the dish rest briefly before serving - this allows the flavors to meld and the temperature to even out.'
-      }
+    difficulty: getDifficultyForLanguage(language),
+    cuisine: getCuisineForLanguage(language),
+    ingredients,
+    instructions,
+    tags: getTagsForLanguage(formData.dietaryRestrictions, language),
+    nutritionalInfo
+  };
+};
+
+const getTitleForLanguage = (dishName: string, language: string): string => {
+  const titles = {
+    en: `Delicious ${dishName.charAt(0).toUpperCase() + dishName.slice(1)}`,
+    ta: `சுவையான ${dishName}`,
+    hi: `स्वादिष्ट ${dishName}`,
+    de: `Köstliche ${dishName}`,
+    fr: `Délicieux ${dishName}`
+  };
+  return titles[language as keyof typeof titles] || titles.en;
+};
+
+const getDescriptionForLanguage = (dishName: string, language: string): string => {
+  const descriptions = {
+    en: `A flavorful and aromatic ${dishName} prepared with fresh ingredients and traditional spices.`,
+    ta: `புதிய பொருட்கள் மற்றும் பாரம்பரிய மசாலாக்களுடன் தயாரிக்கப்பட்ட சுவையான ${dishName}.`,
+    hi: `ताजी सामग्री और पारंपरिक मसालों के साथ तैयार किया गया स्वादिष्ट ${dishName}.`,
+    de: `Ein geschmackvoller ${dishName}, zubereitet mit frischen Zutaten und traditionellen Gewürzen.`,
+    fr: `Un ${dishName} savoureux préparé avec des ingrédients frais et des épices traditionnelles.`
+  };
+  return descriptions[language as keyof typeof descriptions] || descriptions.en;
+};
+
+const getIngredientsForLanguage = (isVegetarian: boolean, language: string) => {
+  const ingredientSets = {
+    en: isVegetarian ? [
+      { name: 'Paneer', amount: '200', unit: 'g' },
+      { name: 'Onions', amount: '2', unit: 'medium' },
+      { name: 'Tomatoes', amount: '3', unit: 'large' },
+      { name: 'Ginger-garlic paste', amount: '1', unit: 'tbsp' },
+      { name: 'Turmeric powder', amount: '1', unit: 'tsp' }
+    ] : [
+      { name: 'Chicken', amount: '500', unit: 'g' },
+      { name: 'Onions', amount: '2', unit: 'medium' },
+      { name: 'Tomatoes', amount: '3', unit: 'large' }
     ],
-    nutritionalInfo: {
-      calories: isVegetarian ? 280 : 320,
-      protein: isVegetarian ? '12g' : '25g',
-      carbs: '15g',
-      fat: isVegetarian ? '15g' : '18g'
-    }
+    ta: isVegetarian ? [
+      { name: 'பன்னீர்', amount: '200', unit: 'கிராம்' },
+      { name: 'வெங்காயம்', amount: '2', unit: 'நடுத்தர' },
+      { name: 'தக்காளி', amount: '3', unit: 'பெரிய' },
+      { name: 'இஞ்சி-பூண்டு விழுது', amount: '1', unit: 'டேபிள்ஸ்பூன்' },
+      { name: 'மஞ்சள் தூள்', amount: '1', unit: 'டீஸ்பூன்' }
+    ] : [
+      { name: 'கோழி', amount: '500', unit: 'கிராம்' },
+      { name: 'வெங்காயம்', amount: '2', unit: 'நடுத்தர' },
+      { name: 'தக்காளி', amount: '3', unit: 'பெரிய' }
+    ],
+    hi: isVegetarian ? [
+      { name: 'पनीर', amount: '200', unit: 'ग्राम' },
+      { name: 'प्याज', amount: '2', unit: 'मध्यम' },
+      { name: 'टमाटर', amount: '3', unit: 'बड़े' },
+      { name: 'अदरक-लहसुन का पेस्ट', amount: '1', unit: 'चम्मच' },
+      { name: 'हल्दी पाउडर', amount: '1', unit: 'चम्मच' }
+    ] : [
+      { name: 'चिकन', amount: '500', unit: 'ग्राम' },
+      { name: 'प्याज', amount: '2', unit: 'मध्यम' },
+      { name: 'टमाटर', amount: '3', unit: 'बड़े' }
+    ],
+    de: isVegetarian ? [
+      { name: 'Paneer', amount: '200', unit: 'g' },
+      { name: 'Zwiebeln', amount: '2', unit: 'mittelgroße' },
+      { name: 'Tomaten', amount: '3', unit: 'große' },
+      { name: 'Ingwer-Knoblauch-Paste', amount: '1', unit: 'EL' },
+      { name: 'Kurkumapulver', amount: '1', unit: 'TL' }
+    ] : [
+      { name: 'Hähnchen', amount: '500', unit: 'g' },
+      { name: 'Zwiebeln', amount: '2', unit: 'mittelgroße' },
+      { name: 'Tomaten', amount: '3', unit: 'große' }
+    ],
+    fr: isVegetarian ? [
+      { name: 'Paneer', amount: '200', unit: 'g' },
+      { name: 'Oignons', amount: '2', unit: 'moyens' },
+      { name: 'Tomates', amount: '3', unit: 'grosses' },
+      { name: 'Pâte gingembre-ail', amount: '1', unit: 'c. à soupe' },
+      { name: 'Poudre de curcuma', amount: '1', unit: 'c. à thé' }
+    ] : [
+      { name: 'Poulet', amount: '500', unit: 'g' },
+      { name: 'Oignons', amount: '2', unit: 'moyens' },
+      { name: 'Tomates', amount: '3', unit: 'grosses' }
+    ]
+  };
+  
+  return ingredientSets[language as keyof typeof ingredientSets] || ingredientSets.en;
+};
+
+const getInstructionsForLanguage = (dishName: string, language: string) => {
+  const instructions = {
+    en: [
+      { step: 1, instruction: 'Heat oil in a large pan over medium heat.' },
+      { step: 2, instruction: 'Add onions and sauté until golden brown.' },
+      { step: 3, instruction: 'Add ginger-garlic paste and cook for 1 minute.' },
+      { step: 4, instruction: 'Add tomatoes and cook until they break down.' },
+      { step: 5, instruction: 'Add spices and mix well.' },
+      { step: 6, instruction: 'Add main ingredient and cook until done.' },
+      { step: 7, instruction: 'Garnish and serve hot.' }
+    ],
+    ta: [
+      { step: 1, instruction: 'நடுத்தர அனலில் ஒரு பெரிய பாத்திரத்தில் எண்ணெய் சூடாக்கவும்.' },
+      { step: 2, instruction: 'வெங்காயம் சேர்த்து தங்க நிறமாகும் வரை வதக்கவும்.' },
+      { step: 3, instruction: 'இஞ்சி-பூண்டு விழுது சேர்த்து 1 நிமிடம் சமைக்கவும்.' },
+      { step: 4, instruction: 'தக்காளி சேர்த்து அவை கரையும் வரை சமைக்கவும்.' },
+      { step: 5, instruction: 'மசாலாப் பொருட்கள் சேர்த்து நன்றாக கலக்கவும்.' },
+      { step: 6, instruction: 'முக்கிய பொருளை சேர்த்து வெந்தும் வரை சமைக்கவும்.' },
+      { step: 7, instruction: 'அலங்கரித்து சூடாக பரிமாறவும்.' }
+    ],
+    hi: [
+      { step: 1, instruction: 'मध्यम आंच पर एक बड़े पैन में तेल गर्म करें।' },
+      { step: 2, instruction: 'प्याज डालकर सुनहरा होने तक भूनें।' },
+      { step: 3, instruction: 'अदरक-लहसुन का पेस्ट डालकर 1 मिनट पकाएं।' },
+      { step: 4, instruction: 'टमाटर डालकर गलने तक पकाएं।' },
+      { step: 5, instruction: 'मसाले डालकर अच्छी तरह मिलाएं।' },
+      { step: 6, instruction: 'मुख्य सामग्री डालकर पकने तक पकाएं।' },
+      { step: 7, instruction: 'सजाकर गर्म परोसें।' }
+    ],
+    de: [
+      { step: 1, instruction: 'Öl in einer großen Pfanne bei mittlerer Hitze erwärmen.' },
+      { step: 2, instruction: 'Zwiebeln hinzufügen und goldbraun anbraten.' },
+      { step: 3, instruction: 'Ingwer-Knoblauch-Paste hinzufügen und 1 Minute kochen.' },
+      { step: 4, instruction: 'Tomaten hinzufügen und kochen bis sie zerfallen.' },
+      { step: 5, instruction: 'Gewürze hinzufügen und gut vermischen.' },
+      { step: 6, instruction: 'Hauptzutat hinzufügen und gar kochen.' },
+      { step: 7, instruction: 'Garnieren und heiß servieren.' }
+    ],
+    fr: [
+      { step: 1, instruction: 'Chauffer l\'huile dans une grande poêle à feu moyen.' },
+      { step: 2, instruction: 'Ajouter les oignons et faire revenir jusqu\'à dorure.' },
+      { step: 3, instruction: 'Ajouter la pâte gingembre-ail et cuire 1 minute.' },
+      { step: 4, instruction: 'Ajouter les tomates et cuire jusqu\'à ce qu\'elles se décomposent.' },
+      { step: 5, instruction: 'Ajouter les épices et bien mélanger.' },
+      { step: 6, instruction: 'Ajouter l\'ingrédient principal et cuire jusqu\'à cuisson.' },
+      { step: 7, instruction: 'Garnir et servir chaud.' }
+    ]
+  };
+  
+  return instructions[language as keyof typeof instructions] || instructions.en;
+};
+
+const getDifficultyForLanguage = (language: string): string => {
+  const difficulties = {
+    en: 'Medium',
+    ta: 'நடுத்தர',
+    hi: 'मध्यम',
+    de: 'Mittel',
+    fr: 'Moyen'
+  };
+  return difficulties[language as keyof typeof difficulties] || difficulties.en;
+};
+
+const getCuisineForLanguage = (language: string): string => {
+  const cuisines = {
+    en: 'Indian',
+    ta: 'இந்திய',
+    hi: 'भारतीय',
+    de: 'Indisch',
+    fr: 'Indienne'
+  };
+  return cuisines[language as keyof typeof cuisines] || cuisines.en;
+};
+
+const getTagsForLanguage = (dietaryRestrictions: string[], language: string): string[] => {
+  const tagSets = {
+    en: dietaryRestrictions.includes('vegetarian') ? ['Vegetarian', 'Healthy', 'Traditional'] : ['Non-Vegetarian', 'Protein-rich', 'Traditional'],
+    ta: dietaryRestrictions.includes('vegetarian') ? ['சைவம்', 'ஆரோக்கியமான', 'பாரம்பரிய'] : ['அசைவம்', 'புரதச்சத்து', 'பாரம்பரிய'],
+    hi: dietaryRestrictions.includes('vegetarian') ? ['शाकाहारी', 'स्वस्थ', 'पारंपरिक'] : ['मांसाहारी', 'प्रोटीन युक्त', 'पारंपरिक'],
+    de: dietaryRestrictions.includes('vegetarian') ? ['Vegetarisch', 'Gesund', 'Traditionell'] : ['Fleisch', 'Proteinreich', 'Traditionell'],
+    fr: dietaryRestrictions.includes('vegetarian') ? ['Végétarien', 'Sain', 'Traditionnel'] : ['Non-végétarien', 'Riche en protéines', 'Traditionnel']
+  };
+  
+  return tagSets[language as keyof typeof tagSets] || tagSets.en;
+};
+
+const getNutritionalInfoForLanguage = (language: string) => {
+  const nutritionLabels = {
+    en: { protein: '8g', carbs: '45g', fat: '12g' },
+    ta: { protein: '8கிராம்', carbs: '45கிராம்', fat: '12கிராம்' },
+    hi: { protein: '8ग्राम', carbs: '45ग्राम', fat: '12ग्राम' },
+    de: { protein: '8g', carbs: '45g', fat: '12g' },
+    fr: { protein: '8g', carbs: '45g', fat: '12g' }
+  };
+  
+  return {
+    calories: 280,
+    ...nutritionLabels[language as keyof typeof nutritionLabels] || nutritionLabels.en
+  };
+};
+
+// Export function to translate existing recipes
+export const translateRecipe = (recipe: Recipe, targetLanguage: string): Recipe => {
+  if (targetLanguage === 'en') return recipe;
+  
+  // This is a simplified translation - in a real app you'd use a translation service
+  return {
+    ...recipe,
+    title: getTitleForLanguage(recipe.title.toLowerCase(), targetLanguage),
+    description: getDescriptionForLanguage(recipe.title.toLowerCase(), targetLanguage),
+    difficulty: getDifficultyForLanguage(targetLanguage),
+    cuisine: getCuisineForLanguage(targetLanguage),
+    tags: getTagsForLanguage(['vegetarian'], targetLanguage),
+    nutritionalInfo: recipe.nutritionalInfo ? {
+      ...recipe.nutritionalInfo,
+      ...getNutritionalInfoForLanguage(targetLanguage)
+    } : undefined
   };
 };
