@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, ChefHat } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface Recipe {
   title: string;
@@ -35,6 +35,8 @@ interface RecipeDisplayProps {
 }
 
 const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 animate-fade-in">
       {/* Recipe Header */}
@@ -85,7 +87,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
         <Card className="shadow-lg border-2 border-coral/20">
           <CardHeader className="bg-peach/30">
             <CardTitle className="text-2xl font-literata text-coral-dark">
-              Ingredients
+              {t('recipe.ingredients')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -109,7 +111,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
         <Card className="shadow-lg border-2 border-coral/20">
           <CardHeader className="bg-teal/20">
             <CardTitle className="text-2xl font-literata text-coral-dark">
-              Instructions
+              {t('recipe.instructions')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -127,7 +129,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                   {instruction.tip && (
                     <div className="ml-11 p-3 bg-teal/10 rounded-lg border-l-4 border-teal">
                       <p className="text-teal-dark text-sm font-medium">
-                        💡 Tip: {instruction.tip}
+                        💡 {t('recipe.tip')}: {instruction.tip}
                       </p>
                     </div>
                   )}
@@ -143,7 +145,7 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
         <Card className="shadow-lg border-2 border-coral/20">
           <CardHeader className="bg-gradient-to-r from-teal/20 to-coral/10">
             <CardTitle className="text-2xl font-literata text-coral-dark">
-              Nutritional Information (per serving)
+              {t('recipe.nutrition')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -152,25 +154,25 @@ const RecipeDisplay: React.FC<RecipeDisplayProps> = ({ recipe }) => {
                 <div className="text-2xl font-bold text-coral-dark">
                   {recipe.nutritionalInfo.calories}
                 </div>
-                <div className="text-sm text-gray-600">Calories</div>
+                <div className="text-sm text-gray-600">{t('recipe.nutrition.calories')}</div>
               </div>
               <div className="text-center p-4 bg-teal/10 rounded-lg">
                 <div className="text-2xl font-bold text-teal-dark">
                   {recipe.nutritionalInfo.protein}
                 </div>
-                <div className="text-sm text-gray-600">Protein</div>
+                <div className="text-sm text-gray-600">{t('recipe.nutrition.protein')}</div>
               </div>
               <div className="text-center p-4 bg-coral/10 rounded-lg">
                 <div className="text-2xl font-bold text-coral-dark">
                   {recipe.nutritionalInfo.carbs}
                 </div>
-                <div className="text-sm text-gray-600">Carbs</div>
+                <div className="text-sm text-gray-600">{t('recipe.nutrition.carbs')}</div>
               </div>
               <div className="text-center p-4 bg-peach/20 rounded-lg">
                 <div className="text-2xl font-bold text-coral-dark">
                   {recipe.nutritionalInfo.fat}
                 </div>
-                <div className="text-sm text-gray-600">Fat</div>
+                <div className="text-sm text-gray-600">{t('recipe.nutrition.fat')}</div>
               </div>
             </div>
           </CardContent>
